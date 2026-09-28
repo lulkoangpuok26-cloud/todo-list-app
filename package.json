@@ -1,0 +1,24 @@
+{
+  "name": "task-master-pro",
+  "version": "1.0.0",
+  "description": "A modern to-do list application with local storage functionality",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx http-server",
+    "dev": "npx http-server -p 8080"
+  },
+  "keywords": [
+    "todo",
+    "task",
+    "local-storage",
+    "productivity",
+    "planner"
+  ],
+  "author": "Task Master Pro",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lulkoangpuok26-cloud/todo-list-app.git"
+  }
+}

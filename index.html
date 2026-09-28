@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Task Master Pro - Modern To-Do List with Local Storage">
+    <title>Task Master Pro - To-Do List</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="app-title">✓ Task Master Pro</h1>
+                    <p class="app-subtitle">Stay organized, stay productive</p>
+                </div>
+                <div class="header-actions">
+                    <button id="themeToggle" class="btn-icon" title="Toggle dark mode" aria-label="Toggle theme">
+                        <span class="icon">🌙</span>
+                    </button>
+                    <button id="exportBtn" class="btn-icon" title="Export tasks" aria-label="Export tasks">
+                        <span class="icon">📥</span>
+                    </button>
+                    <button id="importBtn" class="btn-icon" title="Import tasks" aria-label="Import tasks">
+                        <span class="icon">📤</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <!-- Task Input Section -->
+            <section class="input-section">
+                <div class="input-container">
+                    <input 
+                        type="text" 
+                        id="taskInput" 
+                        class="task-input" 
+                        placeholder="What needs to be done? 🚀"
+                        autocomplete="off"
+                    >
+                    <button id="addTaskBtn" class="btn btn-primary">Add Task</button>
+                </div>
+                <div class="task-meta-controls">
+                    <select id="prioritySelect" class="select-control">
+                        <option value="low">Priority: Low</option>
+                        <option value="medium" selected>Priority: Medium</option>
+                        <option value="high">Priority: High</option>
+                    </select>
+                    <select id="categorySelect" class="select-control">
+                        <option value="general">Category: General</option>
+                        <option value="work">Category: Work</option>
+                        <option value="personal">Category: Personal</option>
+                        <option value="health">Category: Health</option>
+                        <option value="finance">Category: Finance</option>
+                        <option value="shopping">Category: Shopping</option>
+                        <option value="learning">Category: Learning</option>
+                    </select>
+                    <input type="date" id="dueDateInput" class="select-control" title="Set due date">
+                </div>
+            </section>
+
+            <!-- Search & Filter Section -->
+            <section class="search-filter-section">
+                <div class="search-box">
+                    <span class="icon">🔍</span>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="Search tasks..."
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="filter-controls">
+                    <button class="btn-filter active" data-filter="all">
+                        All <span class="count" id="countAll">0</span>
+                    </button>
+                    <button class="btn-filter" data-filter="active">
+                        Active <span class="count" id="countActive">0</span>
+                    </button>
+                    <button class="btn-filter" data-filter="completed">
+                        Completed <span class="count" id="countCompleted">0</span>
+                    </button>
+                </div>
+                <div class="priority-filters">
+                    <button class="btn-priority" data-priority="high" title="High priority">🔴</button>
+                    <button class="btn-priority" data-priority="medium" title="Medium priority">🟡</button>
+                    <button class="btn-priority" data-priority="low" title="Low priority">🟢</button>
+                </div>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-label">Total Tasks</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value" id="statCompleted">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Remaining</div>
+                    <div class="stat-value" id="statRemaining">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completion %</div>
+                    <div class="stat-value" id="statPercent">0%</div>
+                </div>
+            </section>
+
+            <!-- Tasks List -->
+            <section class="tasks-section">
+                <div id="tasksContainer" class="tasks-list">
+                    <!-- Tasks will be rendered here -->
+                </div>
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <p class="empty-text">No tasks yet. Add one to get started!</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <p>Task Master Pro © 2026 | All data stored locally in your browser</p>
+                <button id="clearCompletedBtn" class="btn-link">Clear Completed Tasks</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal for editing -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Task</h2>
+                <button class="btn-close" id="closeModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="editTaskInput" class="task-input" placeholder="Task title">
+                <textarea id="editTaskDescription" class="task-textarea" placeholder="Task description (optional)" rows="4"></textarea>
+                <div class="modal-controls">
+                    <select id="editPriority" class="select-control">
+                        <option value="low">Low Priority</option>
+                        <option value="medium" selected>Medium Priority</option>
+                        <option value="high">High Priority</option>
+                    </select>
+                    <select id="editCategory" class="select-control">
+                        <option value="general">General</option>
+                        <option value="work">Work</option>
+                        <option value="personal">Personal</option>
+                        <option value="health">Health</option>
+                        <option value="finance">Finance</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="learning">Learning</option>
+                    </select>
+                    <input type="date" id="editDueDate" class="select-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+                <button id="saveEditBtn" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="importInput" class="hidden" accept=".json" style="display: none;">
+
+    <script src="app.js"></script>
+</body>
+</html>
