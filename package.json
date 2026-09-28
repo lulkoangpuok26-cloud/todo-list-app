@@ -1,7 +1,7 @@
 {
-  "name": "task-master-pro",
+  "name": "ali-asset-card-task-manager",
   "version": "1.0.0",
-  "description": "A modern to-do list application with local storage functionality",
+  "description": "Ali Asset Card task manager with local storage",
   "main": "index.html",
   "scripts": {
     "start": "python -m http.server 8000",
@@ -9,13 +9,13 @@
     "dev": "npx http-server -p 8080"
   },
   "keywords": [
-    "todo",
-    "task",
-    "local-storage",
-    "productivity",
-    "planner"
+    "Ali Asset Card",
+    "task manager",
+    "local storage",
+    "card dashboard",
+    "productivity"
   ],
-  "author": "Task Master Pro",
+  "author": "Ali Asset Card",
   "license": "MIT",
   "repository": {
     "type": "git",

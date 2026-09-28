@@ -1,176 +1,329 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Task Master Pro - Modern To-Do List with Local Storage">
-    <title>Task Master Pro - To-Do List</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <div class="logo-section">
-                    <h1 class="app-title">✓ Task Master Pro</h1>
-                    <p class="app-subtitle">Stay organized, stay productive</p>
-                </div>
-                <div class="header-actions">
-                    <button id="themeToggle" class="btn-icon" title="Toggle dark mode" aria-label="Toggle theme">
-                        <span class="icon">🌙</span>
-                    </button>
-                    <button id="exportBtn" class="btn-icon" title="Export tasks" aria-label="Export tasks">
-                        <span class="icon">📥</span>
-                    </button>
-                    <button id="importBtn" class="btn-icon" title="Import tasks" aria-label="Import tasks">
-                        <span class="icon">📤</span>
-                    </button>
-                </div>
-            </div>
-        </header>
+// Ali Asset Card Task Manager
+const STORAGE_KEY = 'aliAssetCard_tasks';
+const THEME_KEY = 'aliAssetCard_theme';
 
-        <main class="app-main">
-            <!-- Task Input Section -->
-            <section class="input-section">
-                <div class="input-container">
-                    <input 
-                        type="text" 
-                        id="taskInput" 
-                        class="task-input" 
-                        placeholder="What needs to be done? 🚀"
-                        autocomplete="off"
-                    >
-                    <button id="addTaskBtn" class="btn btn-primary">Add Task</button>
-                </div>
-                <div class="task-meta-controls">
-                    <select id="prioritySelect" class="select-control">
-                        <option value="low">Priority: Low</option>
-                        <option value="medium" selected>Priority: Medium</option>
-                        <option value="high">Priority: High</option>
-                    </select>
-                    <select id="categorySelect" class="select-control">
-                        <option value="general">Category: General</option>
-                        <option value="work">Category: Work</option>
-                        <option value="personal">Category: Personal</option>
-                        <option value="health">Category: Health</option>
-                        <option value="finance">Category: Finance</option>
-                        <option value="shopping">Category: Shopping</option>
-                        <option value="learning">Category: Learning</option>
-                    </select>
-                    <input type="date" id="dueDateInput" class="select-control" title="Set due date">
-                </div>
-            </section>
+class AliAssetCardTaskManager {
+  constructor() {
+    this.tasks = this.loadTasks();
+    this.currentFilter = 'all';
+    this.currentPriorityFilter = null;
+    this.searchQuery = '';
+    this.editingTaskId = null;
+    this.init();
+  }
 
-            <!-- Search & Filter Section -->
-            <section class="search-filter-section">
-                <div class="search-box">
-                    <span class="icon">🔍</span>
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        class="search-input" 
-                        placeholder="Search tasks..."
-                        autocomplete="off"
-                    >
-                </div>
-                <div class="filter-controls">
-                    <button class="btn-filter active" data-filter="all">
-                        All <span class="count" id="countAll">0</span>
-                    </button>
-                    <button class="btn-filter" data-filter="active">
-                        Active <span class="count" id="countActive">0</span>
-                    </button>
-                    <button class="btn-filter" data-filter="completed">
-                        Completed <span class="count" id="countCompleted">0</span>
-                    </button>
-                </div>
-                <div class="priority-filters">
-                    <button class="btn-priority" data-priority="high" title="High priority">🔴</button>
-                    <button class="btn-priority" data-priority="medium" title="Medium priority">🟡</button>
-                    <button class="btn-priority" data-priority="low" title="Low priority">🟢</button>
-                </div>
-            </section>
+  init() {
+    this.bindEvents();
+    this.loadTheme();
+    this.render();
+  }
 
-            <!-- Stats Section -->
-            <section class="stats-section">
-                <div class="stat-card">
-                    <div class="stat-label">Total Tasks</div>
-                    <div class="stat-value" id="statTotal">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Completed</div>
-                    <div class="stat-value" id="statCompleted">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Remaining</div>
-                    <div class="stat-value" id="statRemaining">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Completion %</div>
-                    <div class="stat-value" id="statPercent">0%</div>
-                </div>
-            </section>
+  bindEvents() {
+    document.getElementById('addTaskBtn').addEventListener('click', () => this.addTask());
+    document.getElementById('taskInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.addTask();
+    });
 
-            <!-- Tasks List -->
-            <section class="tasks-section">
-                <div id="tasksContainer" class="tasks-list">
-                    <!-- Tasks will be rendered here -->
-                </div>
-                <div id="emptyState" class="empty-state">
-                    <div class="empty-icon">📝</div>
-                    <p class="empty-text">No tasks yet. Add one to get started!</p>
-                </div>
-            </section>
-        </main>
+    document.querySelectorAll('.btn-filter').forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const filter = e.currentTarget.dataset.filter;
+        this.currentFilter = filter;
+        document.querySelectorAll('.btn-filter').forEach((b) => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        this.render();
+      });
+    });
 
-        <!-- Footer -->
-        <footer class="app-footer">
-            <div class="footer-content">
-                <p>Task Master Pro © 2026 | All data stored locally in your browser</p>
-                <button id="clearCompletedBtn" class="btn-link">Clear Completed Tasks</button>
-            </div>
-        </footer>
-    </div>
+    document.querySelectorAll('.btn-priority').forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const priority = btn.dataset.priority;
+        btn.classList.toggle('active');
+        this.currentPriorityFilter = btn.classList.contains('active') ? priority : null;
+        this.render();
+      });
+    });
 
-    <!-- Modal for editing -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Edit Task</h2>
-                <button class="btn-close" id="closeModal">✕</button>
-            </div>
-            <div class="modal-body">
-                <input type="text" id="editTaskInput" class="task-input" placeholder="Task title">
-                <textarea id="editTaskDescription" class="task-textarea" placeholder="Task description (optional)" rows="4"></textarea>
-                <div class="modal-controls">
-                    <select id="editPriority" class="select-control">
-                        <option value="low">Low Priority</option>
-                        <option value="medium" selected>Medium Priority</option>
-                        <option value="high">High Priority</option>
-                    </select>
-                    <select id="editCategory" class="select-control">
-                        <option value="general">General</option>
-                        <option value="work">Work</option>
-                        <option value="personal">Personal</option>
-                        <option value="health">Health</option>
-                        <option value="finance">Finance</option>
-                        <option value="shopping">Shopping</option>
-                        <option value="learning">Learning</option>
-                    </select>
-                    <input type="date" id="editDueDate" class="select-control">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
-                <button id="saveEditBtn" class="btn btn-primary">Save Changes</button>
-            </div>
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      this.searchQuery = e.target.value.trim().toLowerCase();
+      this.render();
+    });
+
+    document.getElementById('clearCompletedBtn').addEventListener('click', () => {
+      const completed = this.tasks.filter((task) => task.completed).length;
+      if (!completed) return;
+      if (confirm(`Clear ${completed} completed task(s)?`)) {
+        this.tasks = this.tasks.filter((task) => !task.completed);
+        this.save();
+        this.render();
+      }
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+    document.getElementById('exportBtn').addEventListener('click', () => this.exportTasks());
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('importInput').click();
+    });
+    document.getElementById('importInput').addEventListener('change', (event) => this.importTasks(event));
+
+    document.getElementById('closeModal').addEventListener('click', () => this.closeModal());
+    document.getElementById('cancelEditBtn').addEventListener('click', () => this.closeModal());
+    document.getElementById('saveEditBtn').addEventListener('click', () => this.saveEdit());
+    document.getElementById('editModal').addEventListener('click', (event) => {
+      if (event.target.id === 'editModal') this.closeModal();
+    });
+  }
+
+  createTask(title, priority, category, dueDate) {
+    return {
+      id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      title,
+      description: '',
+      completed: false,
+      priority,
+      category,
+      dueDate: dueDate || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      completedAt: null
+    };
+  }
+
+  addTask() {
+    const input = document.getElementById('taskInput');
+    const title = input.value.trim();
+    if (!title) return;
+
+    const priority = document.getElementById('prioritySelect').value;
+    const category = document.getElementById('categorySelect').value;
+    const dueDate = document.getElementById('dueDateInput').value;
+
+    this.tasks.unshift(this.createTask(title, priority, category, dueDate));
+    this.save();
+    input.value = '';
+    document.getElementById('dueDateInput').value = '';
+    this.render();
+  }
+
+  save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tasks));
+  }
+
+  loadTasks() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  getVisibleTasks() {
+    let filtered = [...this.tasks];
+
+    if (this.currentFilter === 'active') filtered = filtered.filter((task) => !task.completed);
+    if (this.currentFilter === 'completed') filtered = filtered.filter((task) => task.completed);
+    if (this.currentPriorityFilter) filtered = filtered.filter((task) => task.priority === this.currentPriorityFilter);
+    if (this.searchQuery) {
+      filtered = filtered.filter((task) => {
+        return (
+          task.title.toLowerCase().includes(this.searchQuery) ||
+          (task.description || '').toLowerCase().includes(this.searchQuery) ||
+          task.category.toLowerCase().includes(this.searchQuery)
+        );
+      });
+    }
+
+    return filtered;
+  }
+
+  renderStats() {
+    const total = this.tasks.length;
+    const completed = this.tasks.filter((task) => task.completed).length;
+    const remaining = total - completed;
+    const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statRemaining').textContent = remaining;
+    document.getElementById('statPercent').textContent = `${progress}%`;
+
+    document.getElementById('countAll').textContent = total;
+    document.getElementById('countActive').textContent = this.tasks.filter((task) => !task.completed).length;
+    document.getElementById('countCompleted').textContent = completed;
+  }
+
+  formatDate(dateString) {
+    if (!dateString) return 'No due date';
+    const date = new Date(dateString);
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) return 'Today';
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  escapeHtml(input) {
+    return input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  renderTask(task) {
+    const wrapper = document.createElement('div');
+    wrapper.className = `task-item ${task.completed ? 'completed' : ''}`;
+    wrapper.innerHTML = `
+      <input class="task-checkbox" type="checkbox" ${task.completed ? 'checked' : ''} data-id="${task.id}">
+      <div class="task-content">
+        <div class="task-header">
+          <div class="task-title">${this.escapeHtml(task.title)}</div>
+          <span class="task-priority ${task.priority}">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+          <span class="task-category">${this.escapeHtml(task.category)}</span>
         </div>
-    </div>
+        ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+        <div class="task-meta">
+          <span>Created: ${this.formatDate(task.createdAt)}</span>
+          ${task.dueDate ? `<span>Due: ${this.formatDate(task.dueDate)}</span>` : ''}
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="btn-task-action edit" data-id="${task.id}" title="Edit task">✎</button>
+        <button class="btn-task-action delete" data-id="${task.id}" title="Delete task">🗑</button>
+      </div>
+    `;
 
-    <!-- Hidden file input for import -->
-    <input type="file" id="importInput" class="hidden" accept=".json" style="display: none;">
+    wrapper.querySelector('.task-checkbox').addEventListener('change', () => this.toggleTask(task.id));
+    wrapper.querySelector('.edit').addEventListener('click', () => this.openEdit(task.id));
+    wrapper.querySelector('.delete').addEventListener('click', () => this.deleteTask(task.id));
 
-    <script src="app.js"></script>
-</body>
-</html>
+    return wrapper;
+  }
+
+  render() {
+    const container = document.getElementById('tasksContainer');
+    const emptyState = document.getElementById('emptyState');
+    const tasks = this.getVisibleTasks();
+
+    this.renderStats();
+
+    container.innerHTML = '';
+    if (!tasks.length) {
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    tasks.forEach((task) => container.appendChild(this.renderTask(task)));
+  }
+
+  toggleTask(taskId) {
+    const task = this.tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    task.completed = !task.completed;
+    task.completedAt = task.completed ? new Date().toISOString() : null;
+    task.updatedAt = new Date().toISOString();
+    this.save();
+    this.render();
+  }
+
+  openEdit(taskId) {
+    const task = this.tasks.find((item) => item.id === taskId);
+    if (!task) return;
+
+    this.editingTaskId = taskId;
+    document.getElementById('editTaskInput').value = task.title;
+    document.getElementById('editTaskDescription').value = task.description || '';
+    document.getElementById('editPriority').value = task.priority;
+    document.getElementById('editCategory').value = task.category;
+    document.getElementById('editDueDate').value = task.dueDate || '';
+
+    document.getElementById('editModal').classList.add('active');
+  }
+
+  closeModal() {
+    this.editingTaskId = null;
+    document.getElementById('editModal').classList.remove('active');
+  }
+
+  saveEdit() {
+    if (!this.editingTaskId) return;
+
+    const task = this.tasks.find((item) => item.id === this.editingTaskId);
+    if (!task) return;
+
+    const title = document.getElementById('editTaskInput').value.trim();
+    if (!title) return;
+
+    task.title = title;
+    task.description = document.getElementById('editTaskDescription').value.trim();
+    task.priority = document.getElementById('editPriority').value;
+    task.category = document.getElementById('editCategory').value;
+    task.dueDate = document.getElementById('editDueDate').value || null;
+    task.updatedAt = new Date().toISOString();
+
+    this.save();
+    this.closeModal();
+    this.render();
+  }
+
+  deleteTask(taskId) {
+    if (!confirm('Delete this card task?')) return;
+    this.tasks = this.tasks.filter((task) => task.id !== taskId);
+    this.save();
+    this.render();
+  }
+
+  exportTasks() {
+    const blob = new Blob([JSON.stringify(this.tasks, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ali-asset-card-tasks.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  importTasks(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!Array.isArray(imported)) throw new Error('Invalid file format');
+        this.tasks = [...this.tasks, ...imported];
+        this.save();
+        this.render();
+      } catch (error) {
+        alert('Invalid task import file.');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  toggleTheme() {
+    const root = document.documentElement;
+    const isDark = root.classList.toggle('dark-mode');
+    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+    const btn = document.getElementById('themeToggle');
+    btn.innerHTML = `<span class="icon">${isDark ? '☀️' : '🌙'}</span>`;
+  }
+
+  loadTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark') document.documentElement.classList.add('dark-mode');
+    const btn = document.getElementById('themeToggle');
+    const isDark = document.documentElement.classList.contains('dark-mode');
+    btn.innerHTML = `<span class="icon">${isDark ? '☀️' : '🌙'}</span>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  new AliAssetCardTaskManager();
+});
